@@ -83,7 +83,7 @@ It's not required, but add some tests and containerize the application if you re
 1. Clone the repository:
 
     ```bash
-    git clone <repository-url>
+    git clone git@github.com:hyltonwalters/laravel-roles-and-permissions.git
     ```
 
 2. Navigate to the project directory:
