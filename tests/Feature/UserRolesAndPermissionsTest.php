@@ -56,38 +56,28 @@ class UserRolesAndPermissionsTest extends TestCase
 
     public function test_admin_has_correct_permissions()
     {
-        // Create an admin user
         $admin = User::factory()->create();
-
-        // Attach admin role to the user
         $adminRole = Role::where('name', 'admin')->first();
         $admin->roles()->attach($adminRole);
 
-        // Assert admin permissions
         $this->assertTrue($admin->hasPermission('view-admin-dashboard'));
         $this->assertTrue($admin->hasPermission('administer-users'));
     }
 
     public function test_manager_has_correct_permissions()
     {
-        // Create a manager user
         $manager = User::factory()->create();
-
-        // Attach manager role to the user
         $managerRole = Role::where('name', 'content-manager')->first();
         $manager->roles()->attach($managerRole);
 
-        // Assert manager permissions
         $this->assertTrue($manager->hasPermission('view-admin-dashboard'));
         $this->assertFalse($manager->hasPermission('administer-users'));
     }
 
     public function test_user_without_roles_has_no_permissions()
     {
-        // Create a regular user without attaching any roles
         $user = User::factory()->create();
 
-        // Assert that user has no permissions
         $this->assertFalse($user->hasPermission('view-admin-dashboard'));
         $this->assertFalse($user->hasPermission('administer-users'));
     }
@@ -108,7 +98,7 @@ class UserRolesAndPermissionsTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('users.store'), $userData);
 
-        $response->assertStatus(302); // Assuming successful creation redirects
+        $response->assertRedirect(route('users.index'));
         $this->assertDatabaseHas('users', ['email' => $userData['email']]);
     }
 
@@ -130,7 +120,7 @@ class UserRolesAndPermissionsTest extends TestCase
 
         $response = $this->actingAs($admin)->put(route('users.update', $user->id), $updatedData);
 
-        $response->assertStatus(302); // Assuming successful update redirects
+        $response->assertRedirect(route('users.show', $user->id));
         $this->assertDatabaseHas('users', ['id' => $user->id, 'first_name' => 'Updated']);
     }
 
@@ -143,7 +133,7 @@ class UserRolesAndPermissionsTest extends TestCase
 
         $response = $this->actingAs($admin)->delete(route('users.destroy', $user->id));
 
-        $response->assertStatus(302); // Assuming successful deletion redirects
+        $response->assertRedirect(route('users.index'));
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
@@ -156,6 +146,7 @@ class UserRolesAndPermissionsTest extends TestCase
 
         $response->assertStatus(200);
     }
+
     public function test_manager_can_access_manager_dashboard()
     {
         $manager = User::factory()->create();
@@ -206,32 +197,42 @@ class UserRolesAndPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_edge_case_invalid_user_creation()
+    public function test_invalid_user_creation_redirects_with_validation_errors()
     {
-        // Create an authenticated admin user
         $admin = User::factory()->create();
-        $admin->roles()->attach(Role::where('name', 'admin')->first());
+        $admin->roles()->attach($this->adminRole);
 
-        // Attempt to create a new user with invalid data (empty request)
-        $response = $this->actingAs($admin)->post(route('users.store'), []);
+        $response = $this->actingAs($admin)
+            ->from(route('users.create'))
+            ->post(route('users.store'), []);
 
-        // Assert that the response status is 422 (Unprocessable Entity)
-        $response->assertStatus(422);
+        $response->assertRedirect(route('users.create'));
+        $response->assertSessionHasErrors([
+            'first_name',
+            'last_name',
+            'email',
+            'roles',
+            'password',
+        ]);
     }
 
-    public function test_error_handling_for_invalid_user_update()
+    public function test_invalid_user_update_redirects_with_validation_errors()
     {
-        // Create an authenticated admin user
         $admin = User::factory()->create();
-        $admin->roles()->attach(Role::where('name', 'admin')->first());
+        $admin->roles()->attach($this->adminRole);
 
-        // Create a user to be updated
         $user = User::factory()->create();
 
-        // Attempt to update the user with invalid data (empty request)
-        $response = $this->actingAs($admin)->put(route('users.update', $user->id), []);
+        $response = $this->actingAs($admin)
+            ->from(route('users.edit', $user->id))
+            ->put(route('users.update', $user->id), []);
 
-        // Assert that the response status is 422 (Unprocessable Entity)
-        $response->assertStatus(422);
+        $response->assertRedirect(route('users.edit', $user->id));
+        $response->assertSessionHasErrors([
+            'first_name',
+            'last_name',
+            'email',
+            'roles',
+        ]);
     }
 }
