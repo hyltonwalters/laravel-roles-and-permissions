@@ -1,3 +1,5 @@
+![Laravel Roles & Permissions banner](docs/social-preview.png)
+
 # Laravel Roles & Permissions
 
 A Laravel 10 backend application demonstrating role-based access control (RBAC), user administration, authorization policies, authentication, login-device detection, external service integration, automated testing and Docker-based development.
