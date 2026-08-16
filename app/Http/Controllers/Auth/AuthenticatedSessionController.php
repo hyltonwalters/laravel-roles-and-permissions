@@ -5,80 +5,53 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\NewDeviceLoginNotification;
 use App\Models\UserLocation;
+use App\Services\IpGeolocationService;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Handle user authentication registered event.
-     */
-    public function handleAuthenticated()
+    public function __construct(private readonly IpGeolocationService $geolocation)
     {
-        // Get the authenticated user
-        $user = Auth::user();
-
-        if ($user !== null) {
-            $userId = $user->id;
-        }
-
-        // Retrieve the user's IP address and user agent
-        $ipAddress = request()->ip();
-        $userAgent = request()->userAgent();
-
-        // Retrieve the user's current location
-        $userLocation = UserLocation::where('user_id', $userId)->first();
-
-        // If user's location doesn't exist or IP or user agent doesn't match, update the record and send notification
-        if (!$userLocation || $userLocation->ip_address !== $ipAddress || $userLocation->user_agent !== $userAgent) {
-            if (!$userLocation) {
-                $userLocation = new UserLocation();
-                $userLocation->user_id = $user->id;
-            }
-
-            // Get location data using IP address from API
-            $locationData = $this->getLocationData($ipAddress);
-
-            // Extract city name from location data
-            $city = $locationData['city'] ?? null;
-
-            // If city data is not available or API request fails,
-            // like in my case it can be one of the following reasons:
-            // private range, reserved range, invalid query
-            // we then generate a fake city name
-            if (!$city) {
-                $city = fake()->city;
-            }
-
-            // Update user's location
-            $userLocation->ip_address = $ipAddress;
-            $userLocation->user_agent = $userAgent;
-            $userLocation->login_at = now();
-            $userLocation->location = $city;
-            $userLocation->save();
-            
-            // Send email notification for new users or existing users with different IP or User Agent
-            Mail::to($user->email)->send(new NewDeviceLoginNotification($user));
-        }
     }
 
     /**
-     * Get location data using IP address from API.
+     * Handle the authenticated event by recording a new device/location and notifying the user.
      */
-    private function getLocationData($ipAddress)
+    public function handleAuthenticated(): void
     {
-        $response = Http::get('http://ip-api.com/json/' . $ipAddress . '?fields=49168');
+        $user = Auth::user();
 
-        if ($response->successful()) {
-            return $response->json();
+        if ($user === null) {
+            return;
         }
 
-        return [];
+        $ipAddress = request()->ip();
+        $userAgent = request()->userAgent();
+
+        $userLocation = UserLocation::where('user_id', $user->id)->first();
+
+        $deviceChanged = !$userLocation
+            || $userLocation->ip_address !== $ipAddress
+            || $userLocation->user_agent !== $userAgent;
+
+        if (!$deviceChanged) {
+            return;
+        }
+
+        $userLocation ??= new UserLocation(['user_id' => $user->id]);
+
+        $userLocation->ip_address = $ipAddress;
+        $userLocation->user_agent = $userAgent;
+        $userLocation->login_at = now();
+        $userLocation->location = $this->geolocation->cityFor($ipAddress) ?? 'Unknown';
+        $userLocation->save();
+
+        Mail::to($user->email)->send(new NewDeviceLoginNotification($user));
     }
 
     /**
@@ -98,6 +71,7 @@ class AuthenticatedSessionController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
+
         $credentials = $request->only('email', 'password');
 
         if (!Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -121,7 +95,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
