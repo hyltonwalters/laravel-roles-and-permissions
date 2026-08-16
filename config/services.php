@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'ip_geolocation' => [
+        'base_url' => env('IP_GEOLOCATION_BASE_URL', 'https://ipwho.is'),
+    ],
+
 ];
