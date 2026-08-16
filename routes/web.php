@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Manager\UserController as ManagerUserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,11 +26,11 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::prefix('manager')->middleware(['manager'])->group(function () {
-        Route::get('dashboard', [UserController::class, 'dashboard'])->name('manager.dashboard');
+        Route::get('dashboard', [ManagerUserController::class, 'dashboard'])->name('manager.dashboard');
     });
 
     Route::prefix('admin')->middleware(['admin'])->group(function () {
-        Route::resource('users', UserController::class);
+        Route::resource('users', AdminUserController::class);
     });
 });
 
