@@ -1,208 +1,215 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Roles & Permissions
 
-# Laravel Roles and Permissions
+A Laravel 10 application demonstrating role-based access control (RBAC), user administration, authorization policies, login-device detection, external IP geolocation, email notifications, feature testing and a Docker-based development environment.
 
-## About
-This project, created by Hylton Walters, is based on instructions provided by PlusNarrative.
+This repository originated from a technical implementation brief and has been retained as a portfolio example of Laravel backend engineering. The application models three roles — **Admin**, **Content Manager** and **User** — with permissions controlling access to the administrative interface and user-management operations.
 
-This documentation provides information on how to use the Laravel Roles and Permissions project. The project aims to implement role-based access control (RBAC) in a Laravel application, allowing administrators to manage user roles, permissions, and access control policies.
+## What the project demonstrates
 
-## Project Instructions
+- Laravel 10 application structure on PHP 8.1+
+- Authentication and email verification through Laravel Breeze
+- Role-based access control using custom `Role` and `Permission` models
+- Many-to-many user/role and role/permission relationships
+- Policy-based authorization for administrative actions
+- Middleware-enforced access for Admin and Content Manager areas
+- User create, read, update and delete workflows
+- Form Request validation for user-management operations
+- Login IP / user-agent tracking
+- New-device login email notifications
+- External IP geolocation lookup
+- Database factories and seeders
+- PHPUnit feature and authentication tests
+- Docker Compose / Laravel Sail development environment
+- MySQL, Redis, MailHog, Meilisearch, Selenium and phpMyAdmin services available in the development stack
 
-> The purpose of this Laravel project is to be able to create a user admin system, where you can create/edit a user and assign a role to a user. Each role has permissions assigned to it. The system also sends an email when a user logs in with a new IP or device/browser. Please follow the below process to get set up.
+> Redis and Meilisearch are present in the Docker development environment, but this README does not claim application-level caching or search features beyond what the current source code implements.
 
-1. Create a new Laravel project via Composer and complete the full installation with your database set up.
-2. Add the Laravel Breeze Authentication starter kit.
-3. Create Migrations, Seeders and Models
-    - Update the user migration to have a first_name and last_name and any other columns you find necessary.
-    - Create a roles table.
-        - The roles should include: Admin, Content Manager, User.
-    - Create a permissions table.
-        - The permissions should include: View Admin Dashboard, Administer Users.
-        - All permissions should be assigned to the Admin role.
-        - Only View Admin Dashboard should be assigned to the Content Manager role.
-    - Create the pivot tables for the above migrations.
-    - Create another pivot table that keeps track of a user's location (integrating with http://ip-api.com/json/<ip> free version - NOTE: not HTTPS), login_at time, and browser user_agent when they log in.
-    - Create a user Seeder and populate the database with 100 Users (using a Factory).
-        - Make one of them an Admin user.
-        - Make another a Content Manager.
-4. Add an Admin button to the top header.
-5. Add the necessary admin routes to create, view, update, and delete users.
-    - The Admin should be able to assign multiple roles to a user.
-6. Protect the Routes according to these permissions:
-    - Admin -> View Admin Dashboard, Administer Users (CRUD).
-    - Content Manager -> View Admin Dashboard (read only).
-    - User -> Not able to access the admin backend or see users.
-7. When a user logs in, the system should check if their IP and User Agent match what is in the database. If it isn't the first entry or a new user, an email (https://laravel.com/docs/10.x/mail#markdown-mailables or https://laravel.com/docs/8.x/notifications#mail-notifications) needs to be sent out to the user informing there is a login from a new device/browser.
-8. When storing/updating a user, use Form Requests to validate and sanitize the request.
-9. Use Tailwind CSS to match the design in Figma.
-10. Where possible, use components for building out the frontend (anonymous components can be used).
+## Authorization model
 
-### Bonus Points
+The application uses roles and permissions rather than relying only on route-level role checks.
 
-It's not required, but add some tests and containerize the application if you really want to impress us.
+### Roles
 
-## Figma Design
-<a href="https://imgur.com/hTasFzT" target="_blank"><img src="https://i.imgur.com/hTasFzT.png" alt="Figma Design" width="400"></a>
-<a href="https://imgur.com/uOK4uGO" target="_blank"><img src="https://i.imgur.com/uOK4uGO.png" alt="Figma Design" width="400"></a>
+- **Admin** — can view the administrative area and administer users.
+- **Content Manager** — can view the manager dashboard but cannot administer users.
+- **User** — standard application access without administrative permissions.
 
-## Credits
+### Permissions
 
-- **Project Creator**: Hylton Walters
-- **Instructions**: PlusNarrative
----
-## Features
+The current permission model includes:
 
-- **Role-Based Access Control**: Define roles and assign permissions to users based on their roles.
-- **User Management**: Manage users, roles, and permissions through an intuitive interface.
-- **MySQL Database**: Store application data in a MySQL database.
-- **Redis Integration**: Utilize Redis for caching and session management.
-- **Full-Text Search**: Incorporate MeiliSearch for efficient full-text search capabilities.
-- **Database Management**: Access and manage the database with PHPMyAdmin.
-- **Testing**: Run tests using ```php artisan test```.
-- **Email Testing**: Test email functionality with MailHog.
-- **User Location Logic**: Capture user location information based on IP address and user agent, and send email notifications for new logins from different devices.
+- `view-admin-dashboard`
+- `administer-users`
 
-## Installation
+`UserPolicy` centralizes authorization decisions for dashboard access and user-management operations, while route middleware protects the Admin and Manager route groups.
+
+## User-management flow
+
+Administrators can:
+
+- View and search users
+- Create users
+- Assign one or more roles
+- View user details
+- Update user information and roles
+- Delete users
+
+Validated user-management input is handled with Laravel Form Requests. Role assignments are persisted through the user/role pivot relationship.
+
+## Login-device detection
+
+When a user authenticates, the application records the current IP address, user agent, login timestamp and a location value.
+
+If the stored IP address or user agent changes, the application:
+
+1. Attempts to resolve the IP address through an external geolocation service.
+2. Updates the user's stored login-location information.
+3. Sends a new-device login email notification.
+
+The current implementation uses the `ip-api.com` HTTP endpoint and falls back to a generated city value when a location cannot be resolved. This is suitable for demonstrating the workflow, but a production implementation should use an HTTPS-capable provider, explicit timeouts/retries and deterministic failure handling.
+
+## Testing
+
+The repository includes Laravel feature tests for the RBAC and user-management behavior, including:
+
+- Unauthenticated access restrictions
+- Admin permission checks
+- Content Manager permission checks
+- Standard-user restrictions
+- Admin user creation
+- Admin user updates
+- Admin user deletion
+- Admin and manager dashboard access
+- Invalid create/update requests
+
+Run the PHP test suite with:
+
+```bash
+php artisan test
+```
+
+or:
+
+```bash
+./vendor/bin/phpunit
+```
+
+The repository also contains the standard Breeze authentication feature tests under `tests/Feature/Auth`.
+
+## Technology stack
+
+### Application
+
+- PHP 8.1+
+- Laravel 10
+- Laravel Breeze
+- Laravel Sanctum
+- PHPUnit 10
+- Blade
+- Tailwind CSS
+- Alpine.js
+- Vite
+
+### Development infrastructure
+
+The Docker Compose configuration provides:
+
+- PHP / Laravel application container
+- MySQL 8
+- Redis
+- Meilisearch
+- MailHog
+- Selenium / Chrome
+- phpMyAdmin
+
+The application container is based on the repository's Laravel Sail-style Docker configuration.
+
+## Local setup
 
 ### Prerequisites
 
-- **Local Installation**:
-    - PHP 8.3 installed on your system.
-    - Composer for PHP dependency management.
-    - NPM and Node.js for front-end asset compilation.
-    - Laravel Breeze Authentication starter kit.
-    - Tailwind CSS for styling.
-### Additionally
-- **Docker Installation**:
-    - Docker installed on your system.
-    - Project pushed to [Docker Hub](https://hub.docker.com/r/871115/laravel-roles-and-permissions) for easy download and convenience.
+For a direct local installation:
 
-### Local Installation
+- PHP 8.1 or newer
+- Composer
+- Node.js / npm
+- MySQL
 
-1. Clone the repository:
+For the containerized environment:
 
-    ```bash
-    git clone git@github.com:hyltonwalters/laravel-roles-and-permissions.git
-    ```
+- Docker
+- Docker Compose
 
-2. Navigate to the project directory:
+### Direct installation
 
-    ```bash
-    cd laravel-roles-and-permissions
-    ```
+```bash
+git clone https://github.com/hyltonwalters/laravel-roles-and-permissions.git
+cd laravel-roles-and-permissions
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+```
 
-3. Install PHP dependencies:
+Configure the database and mail settings in `.env`, then run:
 
-    ```bash
-    composer install
-    ```
+```bash
+php artisan migrate --seed
+npm run build
+php artisan serve
+```
 
-4. Install front-end dependencies:
+### Docker / Sail-style environment
 
-    ```bash
-    npm install && npm run dev
-    ```
+After installing PHP dependencies and creating `.env`:
 
-5. Set up the environment configuration:
+```bash
+docker compose up -d --build
+```
 
-    ```bash
-    cp .env.example .env
-    php artisan key:generate
-    ```
+Then run migrations and seeders in the application container using your preferred Docker Compose / Sail workflow.
 
-6. Update the `.env` file with your database configuration.
+The Compose file exposes the application on `${APP_PORT:-80}` and phpMyAdmin on port `8001` by default.
 
-7. Run the migrations and seed the database:
+## Project structure
 
-    ```bash
-    php artisan migrate --seed
-    ```
+Key areas to review:
 
-8. Start the Laravel development server:
+- `app/Models/User.php` — role/permission helpers and relationships
+- `app/Models/Role.php` — role model and permission relationship
+- `app/Models/Permission.php` — permission model and constants
+- `app/Policies/UserPolicy.php` — authorization rules
+- `app/Http/Middleware/` — role-aware route middleware
+- `app/Http/Controllers/Admin/UserController.php` — administrative user management
+- `app/Http/Controllers/Manager/UserController.php` — manager dashboard behavior
+- `app/Http/Controllers/Auth/AuthenticatedSessionController.php` — login/device tracking workflow
+- `app/Http/Requests/Auth/` — user-management validation
+- `database/seeders/` — default users, roles and permissions
+- `tests/Feature/UserRolesAndPermissionsTest.php` — RBAC and user-management feature coverage
+- `docker-compose.yml` — local development services
 
-    ```bash
-    php artisan serve
-    ```
+## Engineering observations / future hardening
 
-9. Access the application in your web browser at `http://localhost:8000`.
+The repository demonstrates the intended backend concepts, but several areas would be worth hardening before treating it as production-ready:
 
-### Docker Installation
+- Use an HTTPS-capable geolocation provider and configure request timeouts/retries.
+- Remove non-deterministic fake location fallback from application behavior.
+- Consolidate duplicated Admin/Manager dashboard query logic.
+- Ensure routes use the intended Manager controller consistently.
+- Add tests around login-device detection and notification behavior.
+- Add CI to run the PHP test suite and frontend build automatically.
+- Review and trim development services that are not used by application code.
+- Upgrade dependencies deliberately and verify compatibility before any framework-version migration.
+- Add structured error handling around external service failures.
 
-1. Pull the Docker image from Docker Hub:
+## Project context
 
-    ```bash
-    docker pull 871115/laravel-roles-and-permissions
-    ```
+This project was developed from an implementation brief supplied by **PlusNarrative**. The brief required a Laravel user administration system with roles, permissions, protected routes and login-device notification behavior. The implementation in this repository is Hylton Walters' project work based on those requirements.
 
-2. Run the Docker container:
+## Current status
 
-    ```bash
-    docker run -d -p 80:80 871115/laravel-roles-and-permissions
-    ```
-
-3. Access the application in your web browser at `http://localhost`.
-
-## Usage
-
-### Login Credentials
-- **Admin User**:
-    - Email: admin@me.com
-    - Password: admin
-
-
-- **Content Manager User**:
-    - Email: manager@me.com
-    - Password: manager
-  
-
-- **Normal User**:
-  - Email: user@example.com
-  - Password: password
-
-
-### User Management
-
-The project includes controllers and views for user management:
-
-- **Admin\UserController**: Manages user-related actions for administrators, such as creating, updating, deleting, and showing user details.
-- **Manager\UserController**: Manages user-related actions for managers, such as viewing user details.
-
-#### Middleware and UserPolicy
-
-- **Middleware**: Middleware is used to protect routes based on user roles and permissions.
-- **UserPolicy**: UserPolicy defines authorization rules for actions such as creating, updating, and deleting users.
-
-### Roles and Permissions
-
-To manage roles and permissions:
-
-- **Create Roles**: Administrators can create roles using the provided interface.
-- **Assign Permissions**: Assign permissions to roles to define access control policies.
-- **Assign Roles**: Assign roles to users to grant access rights.
-
-### User Location Logic
-
-The project includes logic to capture user location information based on IP address and user agent:
-
-- **Location Capture**: When a user logs in, the system captures the user's IP address and user agent.
-- **API Integration**: The system uses an external API to retrieve location information based on the user's IP address.
-- **Location Update**: If the user's location changes or if the user agent is different from the previous login, the system updates the user's location and sends an email notification to the user.
-
-### Testing
-
-- **Feature Test**: The `UserRolesAndPermissionsTest.php` feature test ensures authorization and permission checks for various actions.
-
-#### The project includes test cases for:
-
-- Authorization checks for various actions.
-- Edge cases and error handling scenarios.
-- Permission checks for accessing different parts of the application.
-
-## Configuration
-
-- **Environment Variables**: You can customize the Laravel application configuration by setting environment variables. Refer to the [Laravel documentation](https://laravel.com/docs/configuration) for details on available configuration options.
+This repository is maintained primarily as a portfolio example of Laravel backend engineering. The source has been reviewed for documentation accuracy, but the current branch should not be represented as freshly runtime-verified until its dependencies, migrations, automated tests and Docker environment have been executed successfully on a clean environment.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
