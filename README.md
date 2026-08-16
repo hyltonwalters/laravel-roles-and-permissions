@@ -19,6 +19,7 @@ This repository originated from a technical implementation brief and has been re
 - External IP geolocation lookup
 - Database factories and seeders
 - PHPUnit feature and authentication tests
+- GitHub Actions workflow for dependency installation, frontend build and test execution
 - Docker Compose / Laravel Sail development environment
 - MySQL, Redis, MailHog, Meilisearch, Selenium and phpMyAdmin services available in the development stack
 
@@ -95,6 +96,12 @@ or:
 ```
 
 The repository also contains the standard Breeze authentication feature tests under `tests/Feature/Auth`.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` is configured to install locked Composer and npm dependencies, build the frontend assets and run the Laravel test suite against SQLite on pushes and pull requests targeting `master`.
+
+The presence of the workflow should not be interpreted as a successful fresh verification until GitHub Actions has completed a run successfully.
 
 ## Technology stack
 
@@ -187,6 +194,7 @@ Key areas to review:
 - `database/seeders/` — default users, roles and permissions
 - `tests/Feature/UserRolesAndPermissionsTest.php` — RBAC and user-management feature coverage
 - `docker-compose.yml` — local development services
+- `.github/workflows/ci.yml` — automated build/test verification
 
 ## Engineering observations / future hardening
 
@@ -197,7 +205,6 @@ The repository demonstrates the intended backend concepts, but several areas wou
 - Consolidate duplicated Admin/Manager dashboard query logic.
 - Ensure routes use the intended Manager controller consistently.
 - Add tests around login-device detection and notification behavior.
-- Add CI to run the PHP test suite and frontend build automatically.
 - Review and trim development services that are not used by application code.
 - Upgrade dependencies deliberately and verify compatibility before any framework-version migration.
 - Add structured error handling around external service failures.
