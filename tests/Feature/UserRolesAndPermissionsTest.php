@@ -137,6 +137,48 @@ class UserRolesAndPermissionsTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
+    public function test_admin_can_delete_another_admin()
+    {
+        $admin = User::factory()->create();
+        $admin->roles()->attach($this->adminRole);
+
+        $otherAdmin = User::factory()->create();
+        $otherAdmin->roles()->attach($this->adminRole);
+
+        $response = $this->actingAs($admin)->delete(route('users.destroy', $otherAdmin->id));
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertDatabaseMissing('users', ['id' => $otherAdmin->id]);
+    }
+
+    public function test_seeded_demo_admin_cannot_be_deleted()
+    {
+        $admin = User::factory()->create();
+        $admin->roles()->attach($this->adminRole);
+
+        $protectedAdmin = User::factory()->create(['email' => 'admin@me.com']);
+        $protectedAdmin->roles()->attach($this->adminRole);
+
+        $response = $this->actingAs($admin)->delete(route('users.destroy', $protectedAdmin->id));
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $protectedAdmin->id, 'email' => 'admin@me.com']);
+    }
+
+    public function test_protected_demo_admin_page_hides_delete_action()
+    {
+        $admin = User::factory()->create();
+        $admin->roles()->attach($this->adminRole);
+
+        $protectedAdmin = User::factory()->create(['email' => 'admin@me.com']);
+        $protectedAdmin->roles()->attach($this->adminRole);
+
+        $response = $this->actingAs($admin)->get(route('users.show', $protectedAdmin->id));
+
+        $response->assertOk();
+        $response->assertDontSee('Delete');
+    }
+
     public function test_admin_can_view_dashboard()
     {
         $admin = User::factory()->create();

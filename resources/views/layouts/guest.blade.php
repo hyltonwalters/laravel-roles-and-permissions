@@ -35,9 +35,11 @@
         @endif
     </div>
 
-    <div>
-        <a href="/">
-            <x-application-logo class="w-20 h-20 fill-current"/>
+    <div class="w-full sm:max-w-md px-6">
+        <a href="/" class="block w-full">
+            <div class="w-full rounded border border-gray-500 px-6 py-4 text-center text-lg font-semibold tracking-wide text-white">
+                RBAC Demo
+            </div>
         </a>
     </div>
 

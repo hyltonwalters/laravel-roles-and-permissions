@@ -10,6 +10,8 @@ class UserPolicy
 {
     use HandlesAuthorization;
 
+    private const PROTECTED_DEMO_ADMIN_EMAIL = 'admin@me.com';
+
     public function viewDashboard(User $user): bool
     {
         return $user->hasAnyPermission([Permission::ADMIN_DASHBOARD, Permission::ADMINISTER_USERS]);
@@ -35,8 +37,9 @@ class UserPolicy
         return $user->hasPermission(Permission::ADMINISTER_USERS);
     }
 
-    public function delete(User $user): bool
+    public function delete(User $user, User $target): bool
     {
-        return $user->hasPermission(Permission::ADMINISTER_USERS);
+        return $user->hasPermission(Permission::ADMINISTER_USERS)
+            && $target->email !== self::PROTECTED_DEMO_ADMIN_EMAIL;
     }
 }
