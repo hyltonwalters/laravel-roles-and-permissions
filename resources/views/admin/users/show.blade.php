@@ -17,7 +17,6 @@
                 <a href="{{ route('users.edit', $user->id) }}"
                    class="bg-[#F84453] text-black font-semibold px-4 py-2 hover:bg-red-400">Edit</a>
 
-                <!-- Delete Button -->
                 @can('delete', $user)
                     <form action="{{ route('users.destroy', $user->id) }}" method="POST">
                         @csrf
