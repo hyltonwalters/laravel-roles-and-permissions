@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, deploy/render-demo]
   pull_request:
     branches: [master]
 
@@ -51,3 +51,14 @@ jobs:
           QUEUE_CONNECTION: sync
           MAIL_MAILER: array
         run: php artisan test
+
+  render-image:
+    name: Render image build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Render image
+        run: docker build --pull -f Dockerfile.render -t laravel-roles-and-permissions-render .
