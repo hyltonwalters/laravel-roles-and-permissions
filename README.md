@@ -6,6 +6,40 @@ A Laravel 10 backend application demonstrating role-based access control (RBAC),
 
 This repository originated from a technical implementation brief and has been retained as a portfolio example of Laravel backend engineering.
 
+## Live demo
+
+**Application:** https://laravel-roles-and-permissions.onrender.com
+
+The portfolio demo is hosted on **Render** using the repository's production Docker image, with **Neon PostgreSQL** as the hosted database.
+
+### Demo credentials
+
+Use the Content Manager account for the public demo:
+
+```text
+Email: manager@me.com
+Password: manager
+```
+
+A normal-user account is also available for comparing standard-access behavior:
+
+```text
+Email: user@me.com
+Password: user
+```
+
+An administrator account exists for private testing but is intentionally not published here.
+
+### Demo behavior
+
+- The application opens on the authentication UI.
+- Successful login redirects to the authenticated dashboard.
+- Content Managers can access the manager user view without full administrative CRUD privileges.
+- Standard users are restricted from protected manager/admin areas.
+- Login-device information is recorded after authentication.
+- IP geolocation failures fall back deterministically to `Unknown`.
+- New-device notification delivery uses Laravel's log mailer in the public Render demo so external SMTP availability cannot break authentication.
+
 ## Engineering highlights
 
 - Laravel 10 / PHP 8.1+
@@ -25,6 +59,8 @@ This repository originated from a technical implementation brief and has been re
 - GitHub Actions CI
 - Vite / Tailwind / Alpine.js frontend tooling
 - Docker Compose / Laravel Sail development environment
+- Render production deployment
+- Neon PostgreSQL production database
 
 ## Authorization model
 
@@ -58,7 +94,7 @@ Input validation is handled with Laravel Form Requests, while role assignments a
 
 Successful authentication records the user's IP address, user agent, login timestamp and resolved location.
 
-If the current IP address or user agent differs from the stored device information, the application treats the authentication as a new-device login. It then resolves the IP address, updates the stored login/device information and sends a new-device login email notification.
+If the current IP address or user agent differs from the stored device information, the application treats the authentication as a new-device login. It then resolves the IP address, updates the stored login/device information and sends a new-device login notification.
 
 ### Geolocation service
 
@@ -118,8 +154,31 @@ GitHub Actions runs application verification on pushes and pull requests. The wo
 6. Installs frontend dependencies
 7. Builds production frontend assets
 8. Runs the Laravel test suite
+9. Builds the Render production Docker image
 
-The current `master` branch passes this CI pipeline successfully.
+The deployment branch is validated by the same CI pipeline used before final promotion to `master`.
+
+## Production deployment
+
+The live portfolio deployment uses:
+
+- **Render Web Service**
+- **Docker runtime** via `Dockerfile.render`
+- **Neon PostgreSQL**
+- Laravel migrations on startup
+- A deterministic production demo seeder that avoids development-only Faker dependencies
+- Vite production assets copied into the runtime image
+- Laravel file sessions/cache for the free demo environment
+- Laravel log mailer for demo notification delivery
+- Trusted reverse-proxy headers so HTTPS form actions remain secure behind Render
+
+The Render startup script lives at:
+
+```text
+deploy/render-start.sh
+```
+
+The production demo is intentionally kept lightweight and portfolio-oriented rather than configured as a full production SaaS stack.
 
 ## Technology stack
 
@@ -139,6 +198,13 @@ The current `master` branch passes this CI pipeline successfully.
 - Alpine.js
 - Axios
 - Vite 5
+
+### Hosting / deployment
+
+- Render
+- Neon PostgreSQL
+- Docker
+- GitHub Actions
 
 ### Development infrastructure
 
@@ -207,7 +273,7 @@ docker compose up -d --build
 
 Run migrations and seeders through your preferred Docker Compose or Laravel Sail workflow.
 
-The Compose configuration represents the project's development environment. The current GitHub Actions workflow verifies dependency installation, frontend compilation and the PHP test suite; it does not currently perform a full Docker Compose integration test.
+The Compose configuration represents the project's development environment. The GitHub Actions workflow verifies dependency installation, frontend compilation, the PHP test suite and the production Render image build.
 
 ## Project structure
 
@@ -218,15 +284,18 @@ Important backend areas include:
 - `app/Models/Permission.php` — permission model
 - `app/Models/UserLocation.php` — login/device information
 - `app/Policies/UserPolicy.php` — authorization rules
-- `app/Http/Middleware/` — role-aware access control
+- `app/Http/Middleware/` — role-aware access control and proxy handling
 - `app/Http/Controllers/Admin/UserController.php` — administrative user management
 - `app/Http/Controllers/Manager/UserController.php` — manager dashboard
 - `app/Http/Controllers/Auth/AuthenticatedSessionController.php` — authentication and device tracking
 - `app/Services/IpGeolocationService.php` — external geolocation integration
 - `app/Http/Requests/Auth/` — user-management validation
-- `database/seeders/` — roles, permissions and development data
+- `database/seeders/ProductionDemoSeeder.php` — deterministic production demo data
+- `database/seeders/` — development seed data
 - `tests/Feature/` — application feature tests
 - `.github/workflows/ci.yml` — continuous integration
+- `Dockerfile.render` — production Render image
+- `deploy/render-start.sh` — Render startup sequence
 - `docker-compose.yml` — development services
 
 ## Engineering decisions
@@ -243,6 +312,12 @@ Several improvements were made while reviewing the project as a portfolio exampl
 - Removed a duplicate unused login-notification class
 - Refreshed direct frontend dependencies while avoiding an unnecessary major-framework migration
 - Added GitHub Actions build and test verification
+- Added a production Render Docker image
+- Added Neon PostgreSQL support for the hosted demo
+- Added a deterministic production-only demo seeder
+- Prevented external mail transport failures from breaking demo authentication
+- Configured trusted reverse-proxy handling for secure HTTPS form submissions behind Render
+- Replaced the original branded application logo with a generic `RBAC Demo` text placeholder for the portfolio deployment
 
 ## Production considerations
 
@@ -252,17 +327,17 @@ Those concerns are intentionally left for newer production-oriented projects rat
 
 ## Project context
 
-This project was originally developed from an implementation brief supplied by **PlusNarrative**. The brief required a Laravel user administration application with roles, permissions, protected routes and new-device login notification behavior.
+This project was originally developed from a third-party technical implementation brief requiring a Laravel user administration application with roles, permissions, protected routes and new-device login notification behavior.
 
 The implementation and subsequent engineering hardening in this repository represent Hylton Walters' project work based on those requirements.
 
 ## Current status
 
-**Portfolio-ready / maintenance mode.**
+**Live portfolio demo / final deployment validation.**
 
-The current branch has been reviewed and hardened, the frontend builds successfully, and the automated Laravel test suite passes both locally and in GitHub Actions.
+The application is live on Render, backed by Neon PostgreSQL, with frontend assets building successfully and the automated Laravel test suite passing in GitHub Actions.
 
-The project is retained as evidence of Laravel backend engineering rather than as an actively developed product.
+Once the final UI/logo check is confirmed, the deployment work can be promoted from `deploy/render-demo` to `master` and the repository can return to maintenance mode.
 
 ## License
 
