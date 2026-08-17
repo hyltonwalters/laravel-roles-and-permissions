@@ -8,11 +8,12 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * Render terminates TLS at its proxy before forwarding requests to the app.
+     * Trust the forwarded headers so Laravel generates HTTPS URLs and form actions.
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.
