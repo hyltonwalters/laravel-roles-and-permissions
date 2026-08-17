@@ -14,26 +14,32 @@ The portfolio demo is hosted on **Render** using the repository's production Doc
 
 ### Demo credentials
 
-Use the Content Manager account for the public demo:
+Use the **Admin account** for the full portfolio demo. Most of the application's functionality, including user administration and role assignment, is available from this account:
+
+```text
+Email: admin@me.com
+Password: admin
+```
+
+A Content Manager account is also available for comparing restricted manager access:
 
 ```text
 Email: manager@me.com
 Password: manager
 ```
 
-A normal-user account is also available for comparing standard-access behavior:
+A normal-user account is available for comparing standard-access behavior:
 
 ```text
 Email: user@me.com
 Password: user
 ```
 
-An administrator account exists for private testing but is intentionally not published here.
-
 ### Demo behavior
 
 - The application opens on the authentication UI.
 - Successful login redirects to the authenticated dashboard.
+- Admins can access full user administration, including create, view, update, delete and role assignment flows.
 - Content Managers can access the manager user view without full administrative CRUD privileges.
 - Standard users are restricted from protected manager/admin areas.
 - Login-device information is recorded after authentication.
@@ -156,7 +162,7 @@ GitHub Actions runs application verification on pushes and pull requests. The wo
 8. Runs the Laravel test suite
 9. Builds the Render production Docker image
 
-The deployment branch is validated by the same CI pipeline used before final promotion to `master`.
+The `master` branch passes this CI pipeline.
 
 ## Production deployment
 
@@ -317,7 +323,7 @@ Several improvements were made while reviewing the project as a portfolio exampl
 - Added a deterministic production-only demo seeder
 - Prevented external mail transport failures from breaking demo authentication
 - Configured trusted reverse-proxy handling for secure HTTPS form submissions behind Render
-- Replaced the original branded application logo with a generic `RBAC Demo` text placeholder for the portfolio deployment
+- Replaced the original branded application logo with a generic text placeholder for the portfolio deployment
 
 ## Production considerations
 
@@ -333,11 +339,9 @@ The implementation and subsequent engineering hardening in this repository repre
 
 ## Current status
 
-**Live portfolio demo / final deployment validation.**
+**Live portfolio demo / maintenance mode.**
 
-The application is live on Render, backed by Neon PostgreSQL, with frontend assets building successfully and the automated Laravel test suite passing in GitHub Actions.
-
-Once the final UI/logo check is confirmed, the deployment work can be promoted from `deploy/render-demo` to `master` and the repository can return to maintenance mode.
+The application is live on Render, backed by Neon PostgreSQL, with frontend assets building successfully and the automated Laravel test suite passing in GitHub Actions. The deployment work has been promoted to `master` and the repository is retained as a completed portfolio example.
 
 ## License
 
