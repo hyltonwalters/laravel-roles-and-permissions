@@ -18,13 +18,15 @@
                    class="bg-[#F84453] text-black font-semibold px-4 py-2 hover:bg-red-400">Edit</a>
 
                 <!-- Delete Button -->
-                <form action="{{ route('users.destroy', $user->id) }}" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="bg-[#F84453] text-black font-semibold px-4 py-2 hover:bg-red-400">
-                        Delete
-                    </button>
-                </form>
+                @can('delete', $user)
+                    <form action="{{ route('users.destroy', $user->id) }}" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="bg-[#F84453] text-black font-semibold px-4 py-2 hover:bg-red-400">
+                            Delete
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
 
