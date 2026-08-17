@@ -12,7 +12,7 @@ $app = require "bootstrap/app.php";
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 exit(App\Models\User::query()->exists() ? 0 : 1);
-' || php artisan db:seed --force
+' || php artisan db:seed --class='Database\Seeders\ProductionDemoSeeder' --force
 
 php artisan view:clear
 php artisan route:clear
